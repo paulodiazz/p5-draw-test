@@ -31,9 +31,8 @@ function App() {
 const ImageEditor = ({ image }) => {
   const imgRef = useRef(null);
   const lines = [];
-  let currentLine = [];
+  let startPoint = null;
   let currentColor = [0, 0, 0]; // Initial color: black
-  let isDrawing = false;
 
   const sketch = (p) => {
     let img;
@@ -56,33 +55,25 @@ const ImageEditor = ({ image }) => {
     };
 
     p.draw = () => {
+      p.background(255); // Clear the canvas in each frame
+      p.image(img, 0, 0); // Redraw the image in each frame
+
       for (const line of lines) {
         p.line(line[0], line[1], line[2], line[3]);
       }
 
-      if (isDrawing && currentLine.length === 2) {
-        p.line(
-          currentLine[0],
-          currentLine[1],
-          p.mouseX,
-          p.mouseY
-        );
+      if (startPoint) {
+        p.line(startPoint[0], startPoint[1], p.mouseX, p.mouseY);
       }
     };
 
-    p.mousePressed = () => {
-      if (!isDrawing) {
-        currentLine = [p.mouseX, p.mouseY];
-        isDrawing = true;
-      }
-    };
 
-    p.mouseReleased = () => {
-      if (isDrawing && currentLine.length === 2) {
-        currentLine.push(p.mouseX, p.mouseY);
-        lines.push([...currentLine]);
-        currentLine = [];
-        isDrawing = false;
+    p.touchStarted = () => {
+      if (!startPoint) {
+        startPoint = [p.mouseX, p.mouseY];
+      } else {
+        lines.push([...startPoint, p.mouseX, p.mouseY]);
+        startPoint = null;
       }
     };
   };
