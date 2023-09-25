@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Dropzone from 'react-dropzone';
 import { ReactP5Wrapper } from '@p5-wrapper/react';
 import './App.css';
@@ -35,41 +35,79 @@ const ImageEditor = ({ image }) => {
   let currentColor = [0, 0, 0]; // Initial color: black
   let isDrawing = false;
 
-  useEffect(() => {
-    const img = new Image();
-    img.src = image;
-    img.onload = () => {
-      const canvas = document.getElementById('editorCanvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0, img.width, img.height);
+  const sketch = (p) => {
+    let img;
+
+    p.preload = () => {
+      img = p.loadImage(image, () => {
+        p.createCanvas(img.width, img.height);
+        p.background(255);
+        p.image(img, 0, 0, img.width, img.height); // Display the image at its actual size
+      });
     };
-  }, [image]);
 
-  const handleTouchMove = (e) => {
-    if (isDrawing) {
-      const canvas = document.getElementById('editorCanvas');
-      const ctx = canvas.getContext('2d');
-      ctx.strokeStyle = `rgb(${currentColor[0]}, ${currentColor[1]}, ${currentColor[2]})`;
-      ctx.lineWidth = 2;
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(currentLine[0], currentLine[1]);
-      ctx.lineTo(e.touches[0].clientX, e.touches[0].clientY);
-      ctx.closePath();
-      ctx.stroke();
-      currentLine = [e.touches[0].clientX, e.touches[0].clientY];
-    }
-  };
+    p.setup = () => {
+      p.noFill();
+      p.stroke(currentColor);
+      p.strokeWeight(2);
+    };
 
-  const handleTouchStart = (e) => {
-    currentLine = [e.touches[0].clientX, e.touches[0].clientY];
-    isDrawing = true;
-  };
+    p.draw = () => {
+      for (const line of lines) {
+        p.line(line[0], line[1], line[2], line[3]);
+      }
 
-  const handleTouchEnd = () => {
-    isDrawing = false;
+      if (isDrawing && currentLine.length === 2) {
+        p.line(
+          currentLine[0],
+          currentLine[1],
+          p.mouseX,
+          p.mouseY
+        );
+      }
+    };
+
+    p.mousePressed = () => {
+      if (!isDrawing) {
+        currentLine = [p.mouseX, p.mouseY];
+        isDrawing = true;
+      }
+    };
+
+    p.mouseReleased = () => {
+      if (isDrawing && currentLine.length === 2) {
+        currentLine.push(p.mouseX, p.mouseY);
+        lines.push([...currentLine]);
+        currentLine = [];
+        isDrawing = false;
+      }
+    };
+
+    // Handle touch events
+    p.touchStarted = () => {
+      if (!isDrawing) {
+        currentLine = [p.mouseX, p.mouseY];
+        isDrawing = true;
+      }
+    };
+
+    p.touchMoved = () => {
+      if (isDrawing) {
+        currentLine.push(p.mouseX, p.mouseY);
+        lines.push([...currentLine]);
+        currentLine = [p.mouseX, p.mouseY];
+      }
+      // To prevent default touch behavior
+      return false;
+    };
+
+    p.touchEnded = () => {
+      if (isDrawing && currentLine.length === 2) {
+        currentLine.push(p.mouseX, p.mouseY);
+        lines.push([...currentLine]);
+      }
+      isDrawing = false;
+    };
   };
 
   const setColor = (color) => {
@@ -78,27 +116,13 @@ const ImageEditor = ({ image }) => {
 
   return (
     <div className="image-editor">
-      <div className="image-container">
-        <canvas
-          id="editorCanvas"
-          ref={imgRef}
-          style={{
-            display: 'block',
-            margin: '0 auto',
-            maxWidth: '100%', // Make the canvas responsive
-            height: 'auto',
-          }}
-          onTouchMove={handleTouchMove}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        />
-      </div>
       <div className="drawing-tools">
         <button onClick={() => setColor([0, 0, 0])}>Black</button>
         <button onClick={() => setColor([255, 0, 0])}>Red</button>
         <button onClick={() => setColor([0, 255, 0])}>Green</button>
         <button onClick={() => setColor([0, 0, 255])}>Blue</button>
       </div>
+      <ReactP5Wrapper sketch={sketch} />
     </div>
   );
 };
