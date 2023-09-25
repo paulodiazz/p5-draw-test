@@ -87,7 +87,11 @@ const ImageEditor = ({ image }) => {
         ref={imgRef}
         src={image}
         alt="Uploaded"
-        style={{ display: 'none' }}
+        style={{
+          display: 'block',
+          margin: '0 auto',
+          maxWidth: '100%', // Make the image responsive
+        }}
       />
       <div className="drawing-tools">
         <button onClick={() => setColor([0, 0, 0])}>Black</button>
