@@ -31,8 +31,7 @@ function App() {
 const ImageEditor = ({ image }) => {
   const imgRef = useRef(null);
   const lines = [];
-  let startPoint = null;
-  let endPoint = null;
+  let currentLine = [];
   let currentColor = [0, 0, 0]; // Initial color: black
   let isDrawing = false;
 
@@ -61,30 +60,28 @@ const ImageEditor = ({ image }) => {
         p.line(line[0], line[1], line[2], line[3]);
       }
 
-      if (isDrawing) {
-        p.line(startPoint[0], startPoint[1], p.mouseX, p.mouseY);
+      if (isDrawing && currentLine.length === 2) {
+        p.line(
+          currentLine[0],
+          currentLine[1],
+          p.mouseX,
+          p.mouseY
+        );
       }
     };
 
     p.mousePressed = () => {
-      if (!startPoint) {
-        startPoint = [p.mouseX, p.mouseY];
+      if (!isDrawing) {
+        currentLine = [p.mouseX, p.mouseY];
         isDrawing = true;
-      } else if (!endPoint) {
-        endPoint = [p.mouseX, p.mouseY];
-        lines.push([...startPoint, ...endPoint]);
-        startPoint = null;
-        endPoint = null;
-        isDrawing = false;
       }
     };
 
     p.mouseReleased = () => {
-      if (isDrawing) {
-        endPoint = [p.mouseX, p.mouseY];
-        lines.push([...startPoint, ...endPoint]);
-        startPoint = null;
-        endPoint = null;
+      if (isDrawing && currentLine.length === 2) {
+        currentLine.push(p.mouseX, p.mouseY);
+        lines.push([...currentLine]);
+        currentLine = [];
         isDrawing = false;
       }
     };
