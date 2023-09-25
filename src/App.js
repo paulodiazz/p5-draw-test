@@ -83,16 +83,22 @@ const ImageEditor = ({ image }) => {
 
   return (
     <div className="image-editor">
-      <img
-        ref={imgRef}
-        src={image}
-        alt="Uploaded"
+      <div
+        className="image-container"
         style={{
-          display: 'block',
-          margin: '0 auto',
-          maxWidth: '100%', // Make the image responsive
+          textAlign: 'center',
         }}
-      />
+      >
+        <img
+          ref={imgRef}
+          src={image}
+          alt="Uploaded"
+          style={{
+            maxWidth: '100%', // Make the image responsive
+            height: 'auto',
+          }}
+        />
+      </div>
       <div className="drawing-tools">
         <button onClick={() => setColor([0, 0, 0])}>Black</button>
         <button onClick={() => setColor([255, 0, 0])}>Red</button>
@@ -103,5 +109,6 @@ const ImageEditor = ({ image }) => {
     </div>
   );
 };
+
 
 export default App;
