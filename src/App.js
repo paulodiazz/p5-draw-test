@@ -30,26 +30,19 @@ function App() {
 
 const ImageEditor = ({ image }) => {
   const imgRef = useRef(null);
+  const canvasRef = useRef(null);
   const lines = [];
   let currentLine = [];
   let currentColor = [0, 0, 0]; // Initial color: black
   let isDrawing = false;
 
   const sketch = (p) => {
-    let img;
-
-    p.preload = () => {
-      img = p.loadImage(image, () => {
-        p.createCanvas(img.width, img.height);
-        p.background(255);
-        p.image(img, 0, 0, img.width, img.height); // Display the image at its actual size
-      });
-    };
-
     p.setup = () => {
+      canvasRef.current = p.createCanvas(p.windowWidth, p.windowHeight);
       p.noFill();
       p.stroke(currentColor);
       p.strokeWeight(2);
+      p.image(imgRef.current, 0, 0, p.width, p.height);
     };
 
     p.draw = () => {
@@ -82,32 +75,6 @@ const ImageEditor = ({ image }) => {
         isDrawing = false;
       }
     };
-
-    // Handle touch events
-    p.touchStarted = () => {
-      if (!isDrawing) {
-        currentLine = [p.mouseX, p.mouseY];
-        isDrawing = true;
-      }
-    };
-
-    p.touchMoved = () => {
-      if (isDrawing) {
-        currentLine.push(p.mouseX, p.mouseY);
-        lines.push([...currentLine]);
-        currentLine = [p.mouseX, p.mouseY];
-      }
-      // To prevent default touch behavior
-      return false;
-    };
-
-    p.touchEnded = () => {
-      if (isDrawing && currentLine.length === 2) {
-        currentLine.push(p.mouseX, p.mouseY);
-        lines.push([...currentLine]);
-      }
-      isDrawing = false;
-    };
   };
 
   const setColor = (color) => {
@@ -116,6 +83,14 @@ const ImageEditor = ({ image }) => {
 
   return (
     <div className="image-editor">
+      <img
+        ref={imgRef}
+        src={image}
+        alt="Uploaded"
+        style={{
+          display: 'none',
+        }}
+      />
       <div className="drawing-tools">
         <button onClick={() => setColor([0, 0, 0])}>Black</button>
         <button onClick={() => setColor([255, 0, 0])}>Red</button>
