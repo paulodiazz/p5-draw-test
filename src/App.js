@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Dropzone from 'react-dropzone';
 import { ReactP5Wrapper } from '@p5-wrapper/react';
 import './App.css';
@@ -35,61 +35,41 @@ const ImageEditor = ({ image }) => {
   let currentColor = [0, 0, 0]; // Initial color: black
   let isDrawing = false;
 
-  const sketch = (p) => {
-    let img;
-
-    p.setup = () => {
-      p.noFill();
-      p.stroke(currentColor);
-      p.strokeWeight(2);
-      p.createCanvas(p.windowWidth, p.windowHeight); // Create a full-screen canvas
-      p.touchMoved = () => {
-        if (!isDrawing) {
-          currentLine = [p.touchX, p.touchY];
-          isDrawing = true;
-        }
-        // To prevent default touch behavior
-        return false;
-      };
+  useEffect(() => {
+    const img = new Image();
+    img.src = image;
+    img.onload = () => {
+      const canvas = document.getElementById('editorCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0, img.width, img.height);
     };
+  }, [image]);
 
-    p.preload = () => {
-      img = p.loadImage(image, () => {
-        p.background(255);
-        p.image(img, 0, 0, p.width, p.height); // Display the image at the full canvas size
-      });
-    };
+  const handleTouchMove = (e) => {
+    if (isDrawing) {
+      const canvas = document.getElementById('editorCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.strokeStyle = `rgb(${currentColor[0]}, ${currentColor[1]}, ${currentColor[2]})`;
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(currentLine[0], currentLine[1]);
+      ctx.lineTo(e.touches[0].clientX, e.touches[0].clientY);
+      ctx.closePath();
+      ctx.stroke();
+      currentLine = [e.touches[0].clientX, e.touches[0].clientY];
+    }
+  };
 
-    p.draw = () => {
-      for (const line of lines) {
-        p.line(line[0], line[1], line[2], line[3]);
-      }
+  const handleTouchStart = (e) => {
+    currentLine = [e.touches[0].clientX, e.touches[0].clientY];
+    isDrawing = true;
+  };
 
-      if (isDrawing && currentLine.length === 2) {
-        p.line(
-          currentLine[0],
-          currentLine[1],
-          p.mouseX,
-          p.mouseY
-        );
-      }
-    };
-
-    p.mousePressed = () => {
-      if (!isDrawing) {
-        currentLine = [p.mouseX, p.mouseY];
-        isDrawing = true;
-      }
-    };
-
-    p.mouseReleased = () => {
-      if (isDrawing && currentLine.length === 2) {
-        currentLine.push(p.mouseX, p.mouseY);
-        lines.push([...currentLine]);
-        currentLine = [];
-        isDrawing = false;
-      }
-    };
+  const handleTouchEnd = () => {
+    isDrawing = false;
   };
 
   const setColor = (color) => {
@@ -98,22 +78,19 @@ const ImageEditor = ({ image }) => {
 
   return (
     <div className="image-editor">
-      <div
-        className="image-container"
-        style={{
-          textAlign: 'center',
-        }}
-      >
-        <img
+      <div className="image-container">
+        <canvas
+          id="editorCanvas"
           ref={imgRef}
-          src={image}
-          alt="Uploaded"
           style={{
             display: 'block',
             margin: '0 auto',
-            maxWidth: '100%', // Make the image responsive
+            maxWidth: '100%', // Make the canvas responsive
             height: 'auto',
           }}
+          onTouchMove={handleTouchMove}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         />
       </div>
       <div className="drawing-tools">
@@ -122,7 +99,6 @@ const ImageEditor = ({ image }) => {
         <button onClick={() => setColor([0, 255, 0])}>Green</button>
         <button onClick={() => setColor([0, 0, 255])}>Blue</button>
       </div>
-      <ReactP5Wrapper sketch={sketch} />
     </div>
   );
 };
