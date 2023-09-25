@@ -31,8 +31,9 @@ function App() {
 const ImageEditor = ({ image }) => {
   const imgRef = useRef(null);
   const lines = [];
-  let startPoint = null;
+  let currentLine = [];
   let currentColor = [0, 0, 0]; // Initial color: black
+  let isDrawing = false;
 
   const sketch = (p) => {
     let img;
@@ -49,32 +50,49 @@ const ImageEditor = ({ image }) => {
       p.noFill();
       p.stroke(currentColor);
       p.strokeWeight(2);
-      p.createCanvas(img.width, img.height); // Set canvas size to match image
+      p.createCanvas(img.width, img.height); // Set canvas size to match the image
       p.background(255);
       p.image(img, 0, 0);
     };
 
     p.draw = () => {
-      p.background(255); // Clear the canvas in each frame
-      p.image(img, 0, 0); // Redraw the image in each frame
-
       for (const line of lines) {
         p.line(line[0], line[1], line[2], line[3]);
       }
 
-      if (startPoint) {
-        p.line(startPoint[0], startPoint[1], p.mouseX, p.mouseY);
+      if (isDrawing && currentLine.length === 2) {
+        p.line(
+          currentLine[0],
+          currentLine[1],
+          p.mouseX,
+          p.mouseY
+        );
       }
     };
 
-
-    p.touchStarted = () => {
-      if (!startPoint) {
-        startPoint = [p.mouseX, p.mouseY];
-      } else {
-        lines.push([...startPoint, p.mouseX, p.mouseY]);
-        startPoint = null;
+    p.mousePressed = () => {
+      if (!isDrawing) {
+        currentLine = [p.mouseX, p.mouseY];
+        isDrawing = true;
       }
+    };
+
+    p.mouseReleased = () => {
+      if (isDrawing && currentLine.length === 2) {
+        currentLine.push(p.mouseX, p.mouseY);
+        lines.push([...currentLine]);
+        currentLine = [];
+        isDrawing = false;
+      }
+    };
+
+    p.touchMoved = () => {
+      if (!isDrawing) {
+        currentLine = [p.touchX, p.touchY];
+        isDrawing = true;
+      }
+      // To prevent default touch behavior
+      return false;
     };
   };
 
@@ -100,5 +118,6 @@ const ImageEditor = ({ image }) => {
     </div>
   );
 };
+
 
 export default App;
