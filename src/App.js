@@ -38,21 +38,18 @@ const ImageEditor = ({ image }) => {
   const sketch = (p) => {
     let img;
 
-    p.preload = () => {
-      img = p.loadImage(image, () => {
-        p.createCanvas(img.width, img.height);
-        p.background(255);
-        p.image(img, 0, 0);
-      });
-    };
-
     p.setup = () => {
       p.noFill();
       p.stroke(currentColor);
       p.strokeWeight(2);
-      p.createCanvas(img.width, img.height); // Set canvas size to match the image
-      p.background(255);
-      p.image(img, 0, 0);
+      p.createCanvas(p.windowWidth, p.windowHeight); // Create a full-screen canvas
+    };
+
+    p.preload = () => {
+      img = p.loadImage(image, () => {
+        p.background(255);
+        p.image(img, 0, 0, p.width, p.height); // Display the image at the full canvas size
+      });
     };
 
     p.draw = () => {
@@ -102,12 +99,24 @@ const ImageEditor = ({ image }) => {
 
   return (
     <div className="image-editor">
-      <img
-        ref={imgRef}
-        src={image}
-        alt="Uploaded"
-        style={{ display: 'none' }}
-      />
+      <div
+        className="image-container"
+        style={{
+          textAlign: 'center',
+        }}
+      >
+        <img
+          ref={imgRef}
+          src={image}
+          alt="Uploaded"
+          style={{
+            display: 'block',
+            margin: '0 auto',
+            maxWidth: '100%', // Make the image responsive
+            height: 'auto',
+          }}
+        />
+      </div>
       <div className="drawing-tools">
         <button onClick={() => setColor([0, 0, 0])}>Black</button>
         <button onClick={() => setColor([255, 0, 0])}>Red</button>
