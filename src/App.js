@@ -43,6 +43,14 @@ const ImageEditor = ({ image }) => {
       p.stroke(currentColor);
       p.strokeWeight(2);
       p.createCanvas(p.windowWidth, p.windowHeight); // Create a full-screen canvas
+      p.touchMoved = () => {
+        if (!isDrawing) {
+          currentLine = [p.touchX, p.touchY];
+          isDrawing = true;
+        }
+        // To prevent default touch behavior
+        return false;
+      };
     };
 
     p.preload = () => {
@@ -82,15 +90,6 @@ const ImageEditor = ({ image }) => {
         isDrawing = false;
       }
     };
-
-    p.touchMoved = () => {
-      if (!isDrawing) {
-        currentLine = [p.touchX, p.touchY];
-        isDrawing = true;
-      }
-      // To prevent default touch behavior
-      return false;
-    };
   };
 
   const setColor = (color) => {
@@ -127,6 +126,5 @@ const ImageEditor = ({ image }) => {
     </div>
   );
 };
-
 
 export default App;
